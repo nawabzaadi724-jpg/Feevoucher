@@ -1,1 +1,328 @@
-index.html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Garrison Higher Secondary School — Fee Voucher Generator</title>
+<style>
+  * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Arial, sans-serif; }
+  body { background: #d8dfe6; margin: 0; padding: 20px 12px; display: flex; justify-content: center; }
+  .app { max-width: 1400px; width: 100%; }
+  h1 { font-size: 1.7rem; margin: 0 0 6px; color: #142e4f; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  h1 small { font-size: .85rem; font-weight: 400; color: #3d6080; background: #c4d5e5; padding: 4px 12px; border-radius: 30px; }
+  .panel { background: white; border-radius: 12px; box-shadow: 0 6px 20px rgba(0,20,40,.08); padding: 20px; margin-bottom: 18px; }
+  .section-title { font-size: 1.05rem; font-weight: 700; margin: 0 0 14px; color: #142e4f; border-left: 5px solid #1a5a8a; padding-left: 10px; text-transform: uppercase; letter-spacing: .5px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+  .section-title .edit-mode-badge { font-size: .7rem; background: #f5a623; color: #142e4f; padding: 4px 12px; border-radius: 20px; font-weight: 700; letter-spacing: .5px; display: none; align-items: center; gap: 6px; }
+  .section-title .edit-mode-badge.active { display: inline-flex; }
+  .form-row { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; align-items: flex-end; }
+  .form-group { flex: 1 0 140px; display: flex; flex-direction: column; gap: 5px; }
+  label { font-size: .78rem; font-weight: 600; color: #24405e; text-transform: uppercase; letter-spacing: .3px; }
+  input, select { padding: 9px 11px; border: 1.5px solid #c0cfdd; border-radius: 8px; font-size: .9rem; background: #fbfdff; }
+  input:focus, select:focus { outline: none; border-color: #1a5a8a; box-shadow: 0 0 0 3px rgba(26,90,138,.12); }
+  button { background: #1a5a8a; color: white; border: none; padding: 9px 18px; border-radius: 8px; font-weight: 600; font-size: .88rem; cursor: pointer; transition: .15s; display: inline-flex; align-items: center; gap: 6px; }
+  button:hover { background: #124468; }
+  button.secondary { background: white; color: #1a5a8a; border: 1.5px solid #1a5a8a; }
+  button.secondary:hover { background: #e8f1f8; }
+  button.danger { background: white; color: #a52a2a; border: 1.5px solid #d99; }
+  button.danger:hover { background: #fee; }
+  button.warning { background: #f5a623; color: #142e4f; }
+  button.warning:hover { background: #e5941a; }
+  button.success { background: #1b8a4a; }
+  button.success:hover { background: #146b39; }
+  button.small { padding: 5px 12px; font-size: .78rem; }
+  button:disabled { opacity: .6; cursor: not-allowed; }
+
+  .months-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin-top: 6px; padding: 14px; background: #f4f8fc; border: 1.5px dashed #b8cde0; border-radius: 10px; }
+  .month-fee-card { background: white; border-radius: 8px; padding: 10px; border: 1.5px solid #d4e0ec; display: flex; flex-direction: column; gap: 5px; }
+  .month-fee-card:focus-within { border-color: #1a5a8a; box-shadow: 0 0 0 3px rgba(26,90,138,.1); }
+  .month-fee-card .month-label { font-size: .72rem; font-weight: 700; color: #142e4f; text-transform: uppercase; letter-spacing: .4px; display: flex; justify-content: space-between; align-items: center; }
+  .month-fee-card .month-label .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #ccc; }
+  .month-fee-card .month-label .status-dot.filled { background: #1a5a8a; }
+  .month-fee-card input { padding: 6px 8px; font-size: .82rem; border-radius: 6px; }
+
+  .register-wrapper { overflow-x: auto; border-radius: 10px; border: 1px solid #d4dee8; background: #fbfdff; }
+  table.register { width: 100%; border-collapse: collapse; font-size: .8rem; min-width: 1200px; }
+  table.register th { background: #142e4f; color: white; font-weight: 600; padding: 10px 4px; text-align: center; font-size: .72rem; text-transform: uppercase; letter-spacing: .4px; }
+  table.register td { padding: 7px 4px; border-bottom: 1px solid #e2eaf2; text-align: center; background: white; }
+  .student-cell { text-align: left !important; font-weight: 600; padding-left: 12px !important; color: #142e4f; }
+  .student-cell small { font-weight: 400; color: #5d7d9c; display: block; font-size: .72rem; }
+  .fee-cell { cursor: pointer; border-radius: 4px; font-weight: 600; font-size: .65rem; padding: 5px 2px; user-select: none; min-width: 60px; }
+  .fee-cell.paid { background: #d9f0dd; color: #186b2c; }
+  .fee-cell.unpaid { background: #fde4e4; color: #a52a2a; }
+  .fee-cell.empty { background: #eef4f9; color: #94aec5; font-weight: 400; }
+  .actions-cell { min-width: 130px; }
+  .actions-cell button { padding: 3px 8px; font-size: .68rem; border-radius: 6px; margin: 0 2px; }
+  .actions-cell .edit-btn { background: #fff4e0; color: #b06d00; border: 1px solid #f5c47a; }
+  .actions-cell .edit-btn:hover { background: #ffeacc; }
+  .actions-cell .del-btn { background: white; color: #a52a2a; border: 1px solid #d99; }
+  .actions-cell .del-btn:hover { background: #fee; }
+
+  .voucher-list { max-height: 400px; overflow-y: auto; border: 1px solid #e0e8f0; border-radius: 10px; padding: 10px; background: #fbfdff; }
+  .voucher-card { background: white; border-radius: 10px; padding: 14px 16px; margin-bottom: 10px; border-left: 5px solid #1a5a8a; box-shadow: 0 2px 6px rgba(0,0,0,.04); display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; }
+  .vc-title { font-weight: 700; font-size: 1rem; color: #142e4f; }
+  .vc-meta { font-size: .78rem; color: #3d6080; display: flex; gap: 14px; flex-wrap: wrap; margin-top: 3px; }
+  .vc-months { font-size: .72rem; color: #a52a2a; font-weight: 600; margin-top: 4px; }
+  .vc-amount { font-weight: 700; font-size: 1.1rem; color: #142e4f; background: #e3eefa; padding: 5px 14px; border-radius: 30px; }
+  .empty-message { padding: 24px; text-align: center; color: #7a96ae; font-style: italic; background: #f6fafd; border-radius: 10px; }
+  .summary-bar { display: flex; gap: 12px; background: #e8f1f8; padding: 10px 16px; border-radius: 30px; font-size: .82rem; font-weight: 600; color: #142e4f; flex-wrap: wrap; }
+  .summary-bar span { background: white; padding: 4px 14px; border-radius: 20px; }
+  .flex-between { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; }
+
+  .modal-overlay { position: fixed; inset: 0; background: rgba(8,20,35,.7); display: none; align-items: flex-start; justify-content: center; z-index: 999; padding: 16px; overflow-y: auto; }
+  .modal-overlay.active { display: flex; }
+  .modal-box { background: white; border-radius: 10px; width: 100%; max-width: 1100px; display: flex; flex-direction: column; margin: auto; box-shadow: 0 20px 50px rgba(0,0,0,.4); }
+  .modal-header { padding: 12px 18px; background: #142e4f; color: white; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; border-radius: 10px 10px 0 0; }
+  .modal-header h3 { margin: 0; font-size: 1rem; }
+  .modal-header button { padding: 7px 14px; font-size: .82rem; }
+  .modal-header button.close-btn { background: transparent; border: 1.5px solid rgba(255,255,255,.5); color: white; }
+  .modal-body { padding: 14px; background: #dde5ec; overflow-y: auto; max-height: calc(100vh - 100px); }
+
+  /* ============================================ */
+  /* VOUCHER — one student's voucher (2 copies)   */
+  /* ============================================ */
+  .voucher-sheet {
+    background: white;
+    padding: 8px 10px;
+    width: 100%;
+    max-width: 1080px;
+    margin: 0 auto;
+    font-family: 'Times New Roman', Georgia, serif;
+    color: #000;
+    font-size: 8.5px;
+  }
+  .sheet-header { text-align: center; border-bottom: 1.5px solid #000; padding-bottom: 4px; margin-bottom: 6px; }
+  .sheet-header .univ-name { font-size: 15px; font-weight: bold; letter-spacing: .8px; text-transform: uppercase; color: #0a2244; }
+  .sheet-header .univ-addr { font-size: 8px; margin-top: 1px; }
+  .sheet-header .voucher-title { font-size: 10px; font-weight: bold; letter-spacing: 3px; margin-top: 3px; text-decoration: underline; text-transform: uppercase; }
+
+  .copies-row { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; align-items: start; }
+
+  .copy-row { display: flex; border: 1.2px solid #000; background: white; }
+  .copy-side { width: 18px; background: #0a2244; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 7px; letter-spacing: 1.5px; writing-mode: vertical-rl; transform: rotate(180deg); text-transform: uppercase; padding: 3px 0; }
+  .copy-body { flex: 1; padding: 0; min-width: 0; }
+  .copy-header { background: #0a2244; color: white; padding: 2.5px 5px; font-size: 8px; font-weight: bold; display: flex; justify-content: space-between; text-transform: uppercase; letter-spacing: .5px; }
+  .copy-header .copy-label { font-size: 8.5px; letter-spacing: 1.5px; }
+
+  .voucher-content { display: block; border-top: 1px solid #000; }
+  .voucher-content .left-col { padding: 3px 5px; border-bottom: 1px dashed #555; }
+  .voucher-content .right-col { padding: 3px 5px; }
+
+  .field-line { display: flex; font-size: 8px; line-height: 1.4; border-bottom: 1px dotted #999; padding: .5px 0; gap: 3px; }
+  .field-line .fl-label { font-weight: bold; min-width: 62px; color: #0a2244; text-transform: uppercase; font-size: 7px; }
+  .field-line .fl-value { flex: 1; font-weight: 600; word-break: break-word; }
+
+  .fee-table { width: 100%; border-collapse: collapse; margin-top: 3px; font-size: 8px; }
+  .fee-table th { background: #e6ecf2; border: 1px solid #000; padding: 1.5px 3px; text-align: left; font-size: 7px; text-transform: uppercase; color: #0a2244; }
+  .fee-table td { border: 1px solid #000; padding: 1.5px 3px; font-size: 8px; }
+  .fee-table td.amt, .fee-table th.amt { text-align: right; }
+  .fee-table tr.total-row td { font-weight: bold; background: #f0f4f8; border-top: 1.5px solid #000; }
+
+  .amount-words { margin-top: 3px; font-size: 7.5px; border: 1px solid #000; padding: 2px 4px; background: #fafcfe; }
+  .amount-words .aw-label { font-weight: bold; font-size: 6.5px; text-transform: uppercase; color: #0a2244; display: block; margin-bottom: 1px; }
+
+  .due-box { display: flex; justify-content: space-between; align-items: center; gap: 3px; margin-top: 3px; border: 1.2px solid #0a2244; padding: 2px 4px; background: #eef4fa; }
+  .due-box .db-item { font-size: 7.5px; }
+  .due-box .db-item b { color: #0a2244; display: block; font-size: 6.5px; text-transform: uppercase; }
+  .due-box .db-total { font-size: 10px; font-weight: bold; color: #0a2244; white-space: nowrap; }
+
+  .signature-row { display: flex; justify-content: space-between; margin-top: 8px; font-size: 7.5px; }
+  .signature-row .sig-box { text-align: center; min-width: 65px; }
+  .signature-row .sig-line { border-top: 1px solid #000; margin-bottom: 1px; height: 12px; }
+  .signature-row .sig-label { font-size: 6.5px; text-transform: uppercase; font-weight: bold; }
+
+  .barcode-strip { text-align: center; font-family: 'Courier New', monospace; letter-spacing: 1.5px; font-size: 9px; font-weight: bold; margin-top: 4px; padding: 1.5px; border-top: 1px solid #000; }
+
+  .instructions { font-size: 7px; margin-top: 3px; padding: 2px 3px; border: 1px dashed #888; background: #fafcfe; line-height: 1.35; }
+  .instructions b { color: #0a2244; }
+
+  @media (max-width: 750px) {
+    .copies-row { grid-template-columns: 1fr; }
+  }
+
+  #printFrame { position: fixed; left: -10000px; top: 0; width: 1200px; height: 1600px; border: 0; }
+
+  .loading-overlay { position: fixed; inset: 0; background: rgba(8,20,35,.75); z-index: 1000; display: none; align-items: center; justify-content: center; flex-direction: column; gap: 16px; color: white; font-weight: 600; font-size: 1rem; }
+  .loading-overlay.active { display: flex; }
+  .spinner { width: 50px; height: 50px; border: 5px solid rgba(255,255,255,.3); border-top-color: white; border-radius: 50%; animation: spin .8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<div class="app">
+  <h1>🎓 Garrison Higher Secondary School <small>Student &amp; Office copy · register · print/PDF</small></h1>
+
+  <div class="panel" id="formPanel">
+    <h2 class="section-title">
+      <span id="formTitle">➕ Add Student &amp; Monthly Fees</span>
+      <span class="edit-mode-badge" id="editBadge">✏️ EDITING: <span id="editStudentName"></span></span>
+    </h2>
+    <div class="form-row">
+      <div class="form-group" style="flex:1.3;">
+        <label>Student Name</label>
+        <input type="text" id="studentName" placeholder="e.g. Ahmed Raza">
+      </div>
+      <div class="form-group" style="flex:1;">
+        <label>Roll No / Reg No</label>
+        <input type="text" id="studentRoll" placeholder="e.g. 2">
+      </div>
+      <div class="form-group" style="flex:1;">
+        <label>Program / Class</label>
+        <input type="text" id="studentClass" placeholder="e.g. 9th">
+      </div>
+      <div class="form-group" style="flex:.7;">
+        <label>Other Charges (PKR)</label>
+        <input type="number" id="feeOther" placeholder="0" min="0" step="100">
+      </div>
+      <div class="form-group" style="flex:.7;">
+        <label>📄 Paper Fund (PKR)</label>
+        <input type="number" id="feePaperFund" placeholder="200" min="0" step="50">
+      </div>
+    </div>
+
+    <div style="margin: 4px 0 8px; font-size: .8rem; font-weight: 700; color: #24405e; text-transform: uppercase; letter-spacing: .3px;">
+      📅 Monthly Tuition Fees (leave blank for months not applicable)
+    </div>
+    <div class="months-grid" id="monthsGrid"></div>
+
+    <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:14px;">
+      <button type="button" id="addFeeBtn">➕ Add / Update Student</button>
+      <button type="button" id="clearFormBtn" class="secondary">Clear Form</button>
+      <button type="button" id="cancelEditBtn" class="warning" style="display:none;">✖ Cancel Edit</button>
+      <button type="button" id="clearAllBtn" class="danger small" style="margin-left:auto;">Delete All Data</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="flex-between">
+      <h2 class="section-title" style="margin:0;">Monthly Fee Register</h2>
+      <div class="summary-bar" id="summaryBar">
+        <span>👥 Students: 0</span>
+        <span>🔴 Unpaid: 0</span>
+      </div>
+    </div>
+    <div class="register-wrapper">
+      <table class="register">
+        <thead id="registerHead"></thead>
+        <tbody id="registerBody"></tbody>
+      </table>
+    </div>
+    <p style="font-size:.78rem;color:#6a8aa8;margin-top:8px;">
+      💡 Click any month cell to toggle Paid / Unpaid. Click <b style="color:#b06d00;">Edit</b> to load student into the form. Click "–" to add that month's fee.
+    </p>
+  </div>
+
+  <div class="panel">
+    <h2 class="section-title">Unpaid Fee Vouchers</h2>
+    <div style="margin-bottom:10px; display:flex; gap:10px; flex-wrap:wrap;">
+      <button type="button" id="generateVouchersBtn">⚡ Show Unpaid Vouchers</button>
+      <button type="button" id="printAllBtn" class="success">🖨️ Print ALL (2 per page)</button>
+      <button type="button" id="saveAllPdfBtn" class="success">📄 Save ALL as PDF</button>
+    </div>
+    <div id="voucherListContainer" class="voucher-list">
+      <div class="empty-message">Click "Show Unpaid Vouchers" to list all unpaid records.</div>
+    </div>
+  </div>
+</div>
+
+<!-- PREVIEW MODAL -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 id="modalTitle">Fee Voucher Preview</h3>
+      <div style="display:flex;gap:8px;">
+        <button type="button" id="downloadPdfBtn">⬇️ Save as PDF</button>
+        <button type="button" id="printBtn" style="background:white;color:#142e4f;">🖨️ Print</button>
+        <button type="button" class="close-btn" id="closeModalBtn">✕ Close</button>
+      </div>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner"></div>
+  <div id="loadingText">Generating vouchers...</div>
+</div>
+
+<iframe id="printFrame" title="print-frame"></iframe>
+
+<script>
+// ================= GLOBAL STATE =================
+var feeRecords = [];
+var nextId = 1;
+var currentVoucherGroup = null;
+var editingStudentId = null;
+
+var MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+var MONTH_SHORT = MONTHS.map(function(m){ return m.slice(0,3); });
+
+var UNIVERSITY = {
+  name: 'Garrison Higher Secondary School',
+  address: '89gb Satiana Banglow District Faisalabad Tehsil Jaranwala',
+  phone: '',
+  website: ''
+};
+
+// ================= HELPERS =================
+function $(id){ return document.getElementById(id); }
+function esc(t){ if(!t) return ''; return String(t).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+function pad(n, w){ w = w || 5; return String(n).padStart(w, '0'); }
+function fmtDate(d){ d = d || new Date(); return String(d.getDate()).padStart(2,'0') + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + d.getFullYear(); }
+function newStudentId(){ return 'stu_' + Date.now() + '_' + Math.random().toString(36).slice(2,7); }
+
+function numberToWords(num){
+  if(num === 0) return 'Zero Rupees Only';
+  var a = ['','One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten','Eleven','Twelve','Thirteen','Fourteen','Fifteen','Sixteen','Seventeen','Eighteen','Nineteen'];
+  var b = ['','','Twenty','Thirty','Forty','Fifty','Sixty','Seventy','Eighty','Ninety'];
+  function two(n){ return n < 20 ? a[n] : b[Math.floor(n/10)] + (n%10 ? ' ' + a[n%10] : ''); }
+  function three(n){ return n < 100 ? two(n) : a[Math.floor(n/100)] + ' Hundred' + (n%100 ? ' ' + two(n%100) : ''); }
+  var out = '';
+  var crore = Math.floor(num / 10000000);
+  var lakh = Math.floor((num % 10000000) / 100000);
+  var thousand = Math.floor((num % 100000) / 1000);
+  var rest = num % 1000;
+  if(crore) out += three(crore) + ' Crore ';
+  if(lakh) out += three(lakh) + ' Lakh ';
+  if(thousand) out += three(thousand) + ' Thousand ';
+  if(rest) out += three(rest);
+  return out.trim() + ' Rupees Only';
+}
+
+function groupAllStudents(){
+  var grouped = {};
+  feeRecords.forEach(function(r){
+    if(!grouped[r.studentId]){
+      grouped[r.studentId] = { id: r.studentId, name: r.studentName, roll: r.studentRoll, cls: r.studentClass, otherCharges: r.otherCharges || 0, paperFund: r.paperFund || 0, records: {} };
+    }
+    grouped[r.studentId].records[r.month] = r;
+  });
+  return grouped;
+}
+
+function buildMonthInputs(){
+  var grid = $('monthsGrid');
+  var html = '';
+  MONTHS.forEach(function(m){
+    html += '<div class="month-fee-card">' +
+      '<div class="month-label"><span>' + m + '</span><span class="status-dot" data-dot="' + m + '"></span></div>' +
+      '<input type="number" id="fee_' + m + '" placeholder="Amount" min="0" step="100" data-month="' + m + '">' +
+      '</div>';
+  });
+  grid.innerHTML = html;
+  MONTHS.forEach(function(m){
+    var inp = document.getElementById('fee_' + m);
+    var dot = document.querySelector('[data-dot="' + m + '"]');
+    inp.addEventListener('input', function(){
+      if(inp.value && parseFloat(inp.value) > 0) dot.classList.add('filled');
+      else dot.classList.remove('filled');
+    });
+  });
+}
+
+// ================= REGISTER =================
+function renderRegister(){
+  var grouped = groupAllStudents();
+  var students = Object.values(grouped).sort(function(a,b){ return a.name.localeCompare(b.name); });
+
+  var head = '<tr><th style="text-align:left;padding-left:12px;min-width:200px;">Student</th>';
+  MONTH_SHORT.forEach(function(m){ head += '<th>' + m + '</th
